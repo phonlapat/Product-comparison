@@ -1,5 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
+import re
 
 def compare_prices(product_name):
     # Scraping data from https://www.tops.co.th/th/all-fresh-products
@@ -47,25 +48,25 @@ def compare_prices(product_name):
     lotuss_price = lotuss_prices.get(product_name)
 
     if tops_price and bigc_price and lotuss_price:
-        min_price = min(float(tops_price.replace(',','')), float(bigc_price.replace(',','')), float(lotuss_price.replace(',','')))
-        if min_price == float(tops_price.replace(',','')):
+        min_price = min(float(re.sub("[^0-9]", "", tops_price)), float(re.sub("[^0-9]", "", bigc_price)), float(re.sub("[^0-9]", "", lotuss_price)))
+        if min_price == float(re.sub("[^0-9]", "", tops_price)):
             print(product_name + " is cheapest at Tops with a price of " + tops_price)
-        elif min_price == float(bigc_price.replace(',','')):
+        elif min_price == float(re.sub("[^0-9]", "", bigc_price)):
             print(product_name + " is cheapest at Big C with a price of " + bigc_price)
         else:
             print(product_name + " is cheapest at Lotuss with a price of " + lotuss_price)
     elif tops_price and bigc_price:
-        if float(tops_price.replace(',','')) < float(bigc_price.replace(',','')):
+        if float(re.sub("[^0-9]", "", tops_price)) < float(re.sub("[^0-9]", "", bigc_price)):
             print(product_name + " is cheaper at Tops with a price of " + tops_price)
         else:
             print(product_name + " is cheaper at Big C with a price of " + bigc_price)
     elif tops_price and lotuss_price:
-        if float(tops_price.replace(',','')) < float(lotuss_price.replace(',','')):
+        if float(re.sub("[^0-9]", "", tops_price)) < float(re.sub("[^0-9]", "", lotuss_price)):
             print(product_name + " is cheaper at Tops with a price of " + tops_price)
         else:
             print(product_name + " is cheaper at Lotuss with a price of " + lotuss_price)
     elif bigc_price and lotuss_price:
-        if float(bigc_price.replace(',','')) < float(lotuss_price.replace(',','')):
+        if float(re.sub("[^0-9]", "", bigc_price)) < float(re.sub("[^0-9]", "", lotuss_price)):
             print(product_name + " is cheaper at Big C with a price of " + bigc_price)
         else:
             print(product_name + " is cheaper at Lotuss with a price of " + lotuss_price)
@@ -81,3 +82,4 @@ def compare_prices(product_name):
 # Get the product name from user input
 product_name = input("Enter product name: ")
 compare_prices(product_name)
+
