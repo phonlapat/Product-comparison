@@ -1,0 +1,51 @@
+import requests
+from bs4 import BeautifulSoup
+
+def compare_prices(product_name):
+    # Scraping data from https://www.tops.co.th/th/all-fresh-products
+    tops_url = "https://www.tops.co.th/th/all-fresh-products"
+    tops_page = requests.get(tops_url)
+    tops_soup = BeautifulSoup(tops_page.content, 'html.parser')
+
+    # Extracting product names and prices from tops
+    product_name_tops = tops_soup.find_all('div', {'class': 'product-name'})
+    product_price_tops = tops_soup.find_all('div', {'class': 'product-price'})
+
+    # Scraping data from https://www.bigc.co.th/category/grocery-bakery
+    bigc_url = "https://www.bigc.co.th/category/grocery-bakery"
+    bigc_page = requests.get(bigc_url)
+    bigc_soup = BeautifulSoup(bigc_page.content, 'html.parser')
+
+    # Extracting product names and prices from bigc
+    product_name_bigc = bigc_soup.find_all('div', {'class': 'productCard_name__2rEgc'})
+    product_price_bigc = bigc_soup.find_all('div', {'class': 'productCard_baht__PPttC'})
+
+    # Compare the prices of the product
+    tops_price = None
+    bigc_price = None
+
+    for i in range(len(product_name_tops)):
+        if product_name_tops[i].text.lower() == product_name.lower():
+            tops_price = product_price_tops[i].text
+            break
+
+    for i in range(len(product_name_bigc)):
+        if product_name_bigc[i].text.lower() == product_name.lower():
+            bigc_price = product_price_bigc[i].text
+            break
+
+    if tops_price and bigc_price:
+        if float(tops_price.replace(',','')) < float(bigc_price.replace(',','')):
+            print(product_name + " is cheaper at Tops with a price of " + tops_price)
+        else:
+            print(product_name + " is cheaper at Big C with a price of " + bigc_price)
+    elif tops_price:
+        print(product_name + " is only available at Tops with a price of " + tops_price)
+    elif bigc_price:
+        print(product_name + " is only available at Big C with a price of " + bigc_price)
+    else:
+        print(product_name + " is not available at either Tops or Big C.")
+
+# Get the product name from user input
+product_name = input("Enter product name: ")
+compare_prices(product_name)
