@@ -8,8 +8,12 @@ def compare_prices(product_name):
     tops_soup = BeautifulSoup(tops_page.content, 'html.parser')
 
     # Extracting product names and prices from tops
-    product_name_tops = tops_soup.find_all('div', {'class': 'product-name'})
-    product_price_tops = tops_soup.find_all('div', {'class': 'product-price'})
+    tops_products = tops_soup.find_all('div', {'class': 'product-info'})
+    tops_prices = {}
+    for product in tops_products:
+        product_name = product.find('div', {'class': 'product-name'}).text
+        product_price = product.find('div', {'class': 'product-price'}).text
+        tops_prices[product_name] = product_price
 
     # Scraping data from https://www.bigc.co.th/category/grocery-bakery
     bigc_url = "https://www.bigc.co.th/category/grocery-bakery"
@@ -17,34 +21,62 @@ def compare_prices(product_name):
     bigc_soup = BeautifulSoup(bigc_page.content, 'html.parser')
 
     # Extracting product names and prices from bigc
-    product_name_bigc = bigc_soup.find_all('div', {'class': 'productCard_name__2rEgc'})
-    product_price_bigc = bigc_soup.find_all('div', {'class': 'productCard_baht__PPttC'})
+    bigc_products = bigc_soup.find_all('div', {'class': 'productCard_name__2rEgc'})
+    bigc_prices = {}
+    for product in bigc_products:
+        product_name = product.text
+        product_price = product.find_next('div', {'class': 'productCard_baht__PPttC'}).text
+        bigc_prices[product_name] = product_price
+
+    # Scraping data from https://www.lotuss.com/en/category/fresh-food
+    lotuss_url = "https://www.lotuss.com/en/category/fresh-food"
+    lotuss_page = requests.get(lotuss_url)
+    lotuss_soup = BeautifulSoup(lotuss_page.content, 'html.parser')
+
+    # Extracting product names and prices from lotuss
+    lotuss_products = lotuss_soup.find_all('div', {'class': 'product-info'})
+    lotuss_prices = {}
+    for product in lotuss_products:
+        product_name = product.find('div', {'class': 'product-name'}).text
+        product_price = product.find('div', {'class': 'product-price'}).text
+        lotuss_prices[product_name] = product_price
 
     # Compare the prices of the product
-    tops_price = None
-    bigc_price = None
+    tops_price = tops_prices.get(product_name)
+    bigc_price = bigc_prices.get(product_name)
+    lotuss_price = lotuss_prices.get(product_name)
 
-    for i in range(len(product_name_tops)):
-        if product_name_tops[i].text.lower() == product_name.lower():
-            tops_price = product_price_tops[i].text
-            break
-
-    for i in range(len(product_name_bigc)):
-        if product_name_bigc[i].text.lower() == product_name.lower():
-            bigc_price = product_price_bigc[i].text
-            break
-
-    if tops_price and bigc_price:
+    if tops_price and bigc_price and lotuss_price:
+        min_price = min(float(tops_price.replace(',','')), float(bigc_price.replace(',','')), float(lotuss_price.replace(',','')))
+        if min_price == float(tops_price.replace(',','')):
+            print(product_name + " is cheapest at Tops with a price of " + tops_price)
+        elif min_price == float(bigc_price.replace(',','')):
+            print(product_name + " is cheapest at Big C with a price of " + bigc_price)
+        else:
+            print(product_name + " is cheapest at Lotuss with a price of " + lotuss_price)
+    elif tops_price and bigc_price:
         if float(tops_price.replace(',','')) < float(bigc_price.replace(',','')):
             print(product_name + " is cheaper at Tops with a price of " + tops_price)
         else:
             print(product_name + " is cheaper at Big C with a price of " + bigc_price)
+    elif tops_price and lotuss_price:
+        if float(tops_price.replace(',','')) < float(lotuss_price.replace(',','')):
+            print(product_name + " is cheaper at Tops with a price of " + tops_price)
+        else:
+            print(product_name + " is cheaper at Lotuss with a price of " + lotuss_price)
+    elif bigc_price and lotuss_price:
+        if float(bigc_price.replace(',','')) < float(lotuss_price.replace(',','')):
+            print(product_name + " is cheaper at Big C with a price of " + bigc_price)
+        else:
+            print(product_name + " is cheaper at Lotuss with a price of " + lotuss_price)
     elif tops_price:
         print(product_name + " is only available at Tops with a price of " + tops_price)
     elif bigc_price:
         print(product_name + " is only available at Big C with a price of " + bigc_price)
+    elif lotuss_price:
+        print(product_name + " is only available at Lotuss with a price of " + lotuss_price)
     else:
-        print(product_name + " is not available at either Tops or Big C.")
+        print(product_name + " is not available at Tops, Big C or Lotuss.")
 
 # Get the product name from user input
 product_name = input("Enter product name: ")
