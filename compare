@@ -1,3 +1,4 @@
+import difflib
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -12,9 +13,9 @@ def compare_prices(product_name):
     tops_products = tops_soup.find_all('div', {'class': 'product-info'})
     tops_prices = {}
     for product in tops_products:
-        product_name = product.find('div', {'class': 'product-name'}).text
+        product_name_tops = product.find('div', {'class': 'product-name'}).text
         product_price = product.find('div', {'class': 'product-price'}).text
-        tops_prices[product_name] = product_price
+        tops_prices[product_name_tops] = product_price
 
     # Scraping data from https://www.bigc.co.th/category/grocery-bakery
     bigc_url = "https://www.bigc.co.th/category/grocery-bakery"
@@ -25,9 +26,9 @@ def compare_prices(product_name):
     bigc_products = bigc_soup.find_all('div', {'class': 'productCard_name__2rEgc'})
     bigc_prices = {}
     for product in bigc_products:
-        product_name = product.text
+        product_name_bigc = product.text
         product_price = product.find_next('div', {'class': 'productCard_baht__PPttC'}).text
-        bigc_prices[product_name] = product_price
+        bigc_prices[product_name_bigc] = product_price
 
     # Scraping data from https://www.lotuss.com/en/category/fresh-food
     lotuss_url = "https://www.lotuss.com/en/category/fresh-food"
@@ -38,14 +39,19 @@ def compare_prices(product_name):
     lotuss_products = lotuss_soup.find_all('div', {'class': 'product-info'})
     lotuss_prices = {}
     for product in lotuss_products:
-        product_name = product.find('div', {'class': 'product-name'}).text
+        product_name_lotuss = product.find('div', {'class': 'product-name'}).text
         product_price = product.find('div', {'class': 'product-price'}).text
-        lotuss_prices[product_name] = product_price
+        lotuss_prices[product_name_lotuss] = product_price
 
     # Compare the prices of the product
-    tops_price = tops_prices.get(product_name)
-    bigc_price = bigc_prices.get(product_name)
-    lotuss_price = lotuss_prices.get(product_name)
+    tops_price, bigc_price, lotuss_price = None, None, None
+    tops_name, bigc_name, lotuss_name = difflib.get_close_matches(product_name, tops_prices.keys(), n=1, cutoff=0.6), difflib.get_close_matches(product_name, bigc_prices.keys(), n=1, cutoff=0.6), difflib.get_close_matches(product_name, lotuss_prices.keys(), n=1, cutoff=0.6)
+    if tops_name:
+        tops_price = tops_prices[tops_name[0]]
+    if bigc_name:
+        bigc_price = bigc_prices[bigc_name[0]]
+    if lotuss_name:
+        lotuss_price = lotuss_prices[lotuss_name[0]]
 
     if tops_price and bigc_price and lotuss_price:
         min_price = min(float(re.sub("[^0-9]", "", tops_price)), float(re.sub("[^0-9]", "", bigc_price)), float(re.sub("[^0-9]", "", lotuss_price)))
@@ -77,9 +83,5 @@ def compare_prices(product_name):
     elif lotuss_price:
         print(product_name + " is only available at Lotuss with a price of " + lotuss_price)
     else:
-        print(product_name + " is not available at Tops, Big C or Lotuss.")
-
-# Get the product name from user input
-product_name = input("Enter product name: ")
-compare_prices(product_name)
+        print(product_name + " is not available on any of the websites.")
 
